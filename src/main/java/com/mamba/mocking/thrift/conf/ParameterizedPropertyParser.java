@@ -1,28 +1,19 @@
 package com.mamba.mocking.thrift.conf;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
-public final class ParameterizedPropertyParser {
+final class ParameterizedPropertyParser {
 
     public static <T> T parse(String define, BiFunction<String, Map<String, String>, T> mapper) {
-        ParameterizedNode property = parse(define);
-        return mapper.apply(property.getName(), property.getAttrs());
-    }
-
-    public static ParameterizedNode parse(String define) {
         if (define == null || define.isEmpty()) {
             return null;
         }
         int left = define.indexOf('(');
         if (left < 0) {
-            return new ParameterizedNode(trim(define, define.length()), Collections.emptyMap());
+            return mapper.apply(trim(define, define.length()), Collections.emptyMap());
         }
         int right = define.lastIndexOf(')');
         if (right < left) {
@@ -62,7 +53,7 @@ public final class ParameterizedPropertyParser {
         if (sb.length() > 0) {
             putAttr(attrs, sb, split);
         }
-        return new ParameterizedNode(trim(define, left), attrs);
+        return mapper.apply(trim(define, left), attrs);
     }
 
     private static String trim(String str, int end) {
@@ -82,20 +73,5 @@ public final class ParameterizedPropertyParser {
             throw new IllegalArgumentException();
         }
         attrs.put(sb.substring(0, split), sb.substring(split + 1));
-    }
-
-    public static <T, V> void setValue(T target, V value, BiConsumer<T, V> consumer) {
-        if (value != null) {
-            consumer.accept(target, value);
-        }
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class ParameterizedNode {
-
-        private String name;
-
-        private Map<String, String> attrs;
     }
 }

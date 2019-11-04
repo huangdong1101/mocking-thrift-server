@@ -53,9 +53,8 @@ public class MockProcessor implements TProcessor {
             if (mockMethodReturn == null || mockMethodReturn.trim().isEmpty()) {
                 if (mockMethodDelay == defaultDelay) {
                     continue;
-                } else {
-                    mockReturnMap.put(method, new MockReturn(mockMethodDelay, null));
                 }
+                mockReturnMap.put(method, new MockReturn(mockMethodDelay, null));
             } else {
                 mockReturnMap.put(method, new MockReturn(mockMethodDelay, JSON.parseObject(mockMethodReturn, method.getGenericReturnType())));
             }
