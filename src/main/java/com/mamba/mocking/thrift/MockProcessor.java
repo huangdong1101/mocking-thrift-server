@@ -1,6 +1,6 @@
 package com.mamba.mocking.thrift;
 
-import com.alibaba.fastjson.JSON;
+import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.thrift.TException;
@@ -25,6 +25,8 @@ public class MockProcessor implements TProcessor {
 
     private final TProcessor processor;
 
+    private static final Gson GSON = new Gson();
+
     public MockProcessor(Class<?> serviceClass, Map<String, String> mockMethodReturnMap, Map<String, Integer> mockMethodDelayMap, int defaultDelay) throws Exception {
         Map<String, Class<?>> innerClassMap = Arrays.stream(serviceClass.getClasses()).collect(Collectors.toMap(Class::getSimpleName, Function.identity()));
         Class<?> ifaceClass = innerClassMap.get("Iface");
@@ -44,6 +46,7 @@ public class MockProcessor implements TProcessor {
     }
 
     private static Map<Method, MockReturn> genMockReturnMap(Class<?> ifaceClass, Map<String, String> mockMethodReturnMap, Map<String, Integer> mockMethodDelayMap, int defaultDelay) {
+
         Method[] methods = ifaceClass.getMethods();
         Map<Method, MockReturn> mockReturnMap = new HashMap<>((int) Math.ceil(methods.length / 0.75));
         for (Method method : methods) {
@@ -56,7 +59,7 @@ public class MockProcessor implements TProcessor {
                 }
                 mockReturnMap.put(method, new MockReturn(mockMethodDelay, null));
             } else {
-                mockReturnMap.put(method, new MockReturn(mockMethodDelay, JSON.parseObject(mockMethodReturn, method.getGenericReturnType())));
+                mockReturnMap.put(method, new MockReturn(mockMethodDelay, GSON.fromJson(mockMethodReturn, method.getGenericReturnType())));
             }
         }
         return mockReturnMap;
