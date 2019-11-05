@@ -1,6 +1,6 @@
 package com.mamba.mocking.thrift.conf;
 
-import com.mamba.mocking.thrift.MockProcessor;
+import com.mamba.mocking.thrift.MockProcessorFactory;
 import org.apache.thrift.TMultiplexedProcessor;
 import org.apache.thrift.TProcessor;
 
@@ -49,7 +49,7 @@ public class TProcessorParser {
         }
 
         //创建Processor
-        Map<String, MockProcessor> mockProcessorMap = new HashMap<>();
+        Map<String, TProcessor> mockProcessorMap = new HashMap<>();
         for (Map.Entry<String, String> classEntry : classMap.entrySet()) {
             String serviceType = classEntry.getValue();
             if (serviceType == null || serviceType.isEmpty()) {
@@ -60,7 +60,8 @@ public class TProcessorParser {
             Integer defaultDelay = delayMap.getOrDefault(serviceName, 0);
             Map<String, String> mockMethodReturnMap = methodReturnMap.getOrDefault(serviceName, Collections.emptyMap());
             Map<String, Integer> mockMethodDelayMap = methodDelayMap.getOrDefault(serviceName, Collections.emptyMap());
-            MockProcessor mockProcessor = new MockProcessor(serviceClass, mockMethodReturnMap, mockMethodDelayMap, defaultDelay);
+            MockProcessorFactory processorFactory = new MockProcessorFactory(serviceClass);
+            TProcessor mockProcessor = processorFactory.newProcessor(mockMethodReturnMap, mockMethodDelayMap, defaultDelay);
             mockProcessorMap.put(serviceName, mockProcessor);
         }
 
@@ -69,9 +70,9 @@ public class TProcessorParser {
             throw new IllegalStateException("None service register in properties");
         }
         if (mockProcessorMap.size() == 1) {
-            Map.Entry<String, MockProcessor> processorEntry = mockProcessorMap.entrySet().iterator().next();
+            Map.Entry<String, TProcessor> processorEntry = mockProcessorMap.entrySet().iterator().next();
             String serviceName = processorEntry.getKey();
-            MockProcessor mockProcessor = processorEntry.getValue();
+            TProcessor mockProcessor = processorEntry.getValue();
             if (serviceName.isEmpty()) {
                 return mockProcessor;
             }
@@ -80,9 +81,9 @@ public class TProcessorParser {
             return multiplexedProcessor;
         }
         TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
-        for (Map.Entry<String, MockProcessor> processorEntry : mockProcessorMap.entrySet()) {
+        for (Map.Entry<String, TProcessor> processorEntry : mockProcessorMap.entrySet()) {
             String serviceName = processorEntry.getKey();
-            MockProcessor mockProcessor = processorEntry.getValue();
+            TProcessor mockProcessor = processorEntry.getValue();
             if (serviceName.isEmpty()) {
                 multiplexedProcessor.registerDefault(mockProcessor);
             } else {
